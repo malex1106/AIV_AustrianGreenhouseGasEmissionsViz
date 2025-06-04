@@ -827,6 +827,11 @@ function lineChart(overallWidth, overallHeight) {
 
 ```js
 function emissionsBarTreeChart(width, height) {
+  // Helper function to abbreviate "Waste management" to "Waste"
+  function abbreviateSector(sector) {
+    return sector.toLowerCase() === "waste management" ? "Waste" : sector;
+  }
+
   // Use mutable values for the selected year, region, and classification
   let currentYear = year;
   let currentRegion = selectedRegion;
@@ -853,7 +858,7 @@ function emissionsBarTreeChart(width, height) {
   // Set up dimensions for the entire visualization
   //const width = 900;
   //const height = 500;
-  const margin = { top: 0, right: 20, bottom: 75, left: 100 };
+  const margin = { top: 0, right: 20, bottom: 75, left: 50 };
   
   // Create main SVG
   const svg = d3.create("svg")
@@ -887,7 +892,8 @@ function emissionsBarTreeChart(width, height) {
     .domain([0, d3.max(data, d => d.value)])
     .range([0, barChartWidth - margin.left - margin.right]);
   
-  // Y scale for bar chart
+  // Y scale for bar chart. We keep the original sector names in the domain,
+  // then use a tick formatter to display the abbreviated name when needed.
   const barY = d3.scaleBand()
     .domain(data.map(d => d.sector))
     .range([0, height - margin.top - margin.bottom - 20])
@@ -911,18 +917,18 @@ function emissionsBarTreeChart(width, height) {
         .attr("stroke", "#000")
         .attr("stroke-width", 1);
       
-      // Show tooltip
+      // Show tooltip (using the abbreviated name for display)
       const percent = (d.value / total * 100).toFixed(1);
       tooltip.transition()
         .duration(200)
         .style("opacity", 0.9);
-      tooltip.html(`<strong>${d.sector}</strong><br>
+      tooltip.html(`<strong>${abbreviateSector(d.sector)}</strong><br>
                    ${(d.value/1000000).toFixed(2)}M t CO2-eq<br>
                    ${percent}% of total`)
         .style("left", (event.pageX) + "px")
         .style("top", (event.pageY - 28) + "px");
 
-      // Update
+      // Update (pass the full name for internal use)
       setSector(d.sector);
     })
     .on("mouseout", function() {
@@ -966,9 +972,9 @@ function emissionsBarTreeChart(width, height) {
     .selectAll("text")
     .attr("font-size", "10px");
   
-  // Add y-axis
+  // Add y-axis with tick formatter to abbreviate "Waste management"
   barChartGroup.append("g")
-    .call(d3.axisLeft(barY))
+    .call(d3.axisLeft(barY).tickFormat(abbreviateSector))
     .selectAll("text")
     .attr("font-size", "10px");
   
@@ -1010,18 +1016,18 @@ function emissionsBarTreeChart(width, height) {
         .attr("stroke", "#000")
         .attr("stroke-width", 1);
       
-      // Show tooltip
+      // Show tooltip (using the abbreviated name for display)
       const percent = (d.data.value / total * 100).toFixed(1);
       tooltip.transition()
         .duration(200)
         .style("opacity", 0.9);
-      tooltip.html(`<strong>${d.data.name}</strong><br>
+      tooltip.html(`<strong>${abbreviateSector(d.data.name)}</strong><br>
                    ${(d.data.value/1000000).toFixed(2)}M t CO2-eq<br>
                    ${percent}% of total`)
         .style("left", (event.pageX) + "px")
         .style("top", (event.pageY - 28) + "px");
 
-      // Update
+      // Update (pass the full name for internal use)
       setSector(d.data.name);
     })
     .on("mouseout", function() {
@@ -1048,7 +1054,7 @@ function emissionsBarTreeChart(width, height) {
     .attr("fill", d => getColorForSector(d.data.name))
     .attr("stroke", "white");
   
-  // Add text labels for cells
+  // Add text labels for cells (use abbreviated names)
   cell.append("text")
     .attr("x", 4)
     .attr("y", 14)
@@ -1056,7 +1062,7 @@ function emissionsBarTreeChart(width, height) {
     .attr("fill", "white")
     .text(d => {
       // Only add text if there's enough space
-      return (d.x1 - d.x0 > 40 && d.y1 - d.y0 > 25) ? d.data.name : "";
+      return (d.x1 - d.x0 > 40 && d.y1 - d.y0 > 25) ? abbreviateSector(d.data.name) : "";
     });
   
   // Add percentage labels
@@ -1084,9 +1090,8 @@ function emissionsBarTreeChart(width, height) {
     .text(d => {
       // Only add icon if there's enough space
       if (d.x1 - d.x0 < 50 || d.y1 - d.y0 < 50) return "";
-
       return getIconForSector(d.data.name);
-  });
+    });
   
   // Create the container elements
   const container = document.createElement("div");
@@ -1670,10 +1675,10 @@ const totalEmissionsYear = Object.values(getSectorBreakdownForAllRegions(year, c
 <div class="grid grid-cols-3" style="grid-auto-rows: 10;">
   <div class="card" style="display: flex; flex-direction: column;">
     <div class="card-title">
-      Total Year Emissions
+      Total Year Emissions ${year}
     </div>
-    <div style="flex: 1; position: relative; font-size: 18px; font-weight: 500;">
-      ${(totalEmissionsYear / 1e6).toFixed(2)}M CO2-eq
+    <div class="hero" style="flex: 1; position: relative; display:flex;">
+      <h2>${(totalEmissionsYear / 1e6).toFixed(2)}M CO2-eq</h2>
     </div>
   </div>
   <div class="card" style="display: flex; flex-direction: column;">
@@ -1864,7 +1869,7 @@ function yearComparisonChart(width, desiredHeight) {
   </div>
   <div class="card" style="display: flex; flex-direction: column;">
     <div class="card-title">
-      Federal state view
+      Federal state view ${year}
     </div>
     <div class="chart-container" style="flex: 1; position: relative;">
       ${resize((width, height) => map(width, height))}
@@ -1875,7 +1880,7 @@ function yearComparisonChart(width, desiredHeight) {
 <div class="grid grid-cols-2" style="grid-auto-rows: 504px;">
   <div class="card" style="display: flex; flex-direction: column;">
     <div class="card-title">
-      Share of sectors GHG emissions
+      Share of sectors GHG emissions ${year}
     </div>
     <div class="chart-container" style="flex: 1; position: relative;">
       ${resize((width, height) => emissionsBarTreeChart(width, height))}
@@ -1883,7 +1888,7 @@ function yearComparisonChart(width, desiredHeight) {
   </div>
   <div class="card" style="display: flex; flex-direction: column;">
     <div class="card-title">
-        Change in emissions
+        Change in emissions between ${comparisonYears[0]} and ${comparisonYears[1]}
     </div>
     <div class="chart-container" style="flex: 1; position: relative;">
       ${resize((width, height) => yearComparisonChart(width, height))}
@@ -1912,6 +1917,16 @@ function yearComparisonChart(width, desiredHeight) {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  }
+
+  .hero h2 {
+    font-size: 25px; 
+    font-weight: 700;
+    line-height: 1;
+    background: linear-gradient(30deg, var(--theme-foreground-focus), currentColor);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .card-title {

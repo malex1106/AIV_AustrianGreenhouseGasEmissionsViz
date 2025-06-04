@@ -725,7 +725,7 @@ function createSectorListElement() {
     "Industry",
     "Energy", 
     "Buildings",
-    "Transport",
+    //"Transport",
     "Farming",
     "Waste management",
     "Traffic",
@@ -786,6 +786,15 @@ function createSectorListElement() {
   }</div>
 </div>
 
+<div class="hero">
+  <p style="text-align: justify;">
+  The chart shows that the Industry and Traffic sectors are the largest contributors to greenhouse gas emissions. Furthermore, total emissions have been declining since 2005.
+  </p>
+  <p style="text-align: justify;">
+  Now you got the basic knowledge! For more details, visit our <a href="dashboard">dashboard</a>.
+  </p>
+</div>
+
 <style>
 
 .hero {
@@ -794,7 +803,7 @@ function createSectorListElement() {
   align-items: center;
   font-family: var(--sans-serif);
   margin: 3rem 0 8rem;
-  text-wrap: balance;
+  /*text-wrap: balance;*/
   text-align: center;
 }
 
